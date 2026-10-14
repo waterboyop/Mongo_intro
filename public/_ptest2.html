@@ -1,0 +1,44 @@
+﻿<html><body style='margin:0'><iframe id=f src='/' style='width:1280px;height:900px;border:0'></iframe><pre id=o>wait</pre>
+<script>
+const KEY='mango-visitor-name';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const f=document.getElementById('f'); const out=[];
+const setVal=(el,v)=>{ Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(el,v); el.dispatchEvent(new Event('input',{bubbles:true})); };
+const D=()=>f.contentDocument, W=()=>f.contentWindow;
+// 等到頁面真的水合完成（React 在根節點掛上 __reactContainer / 事件屬性）
+async function hydrated(){ for(let i=0;i<200;i++){ await sleep(100); try{ const d=D(); if(d.readyState==='complete' && d.body && Object.keys(d.body.firstElementChild||{}).some(k=>k.startsWith('__react'))) { await sleep(300); return true; } }catch(e){} } return false; }
+function reload(){ return new Promise(res=>{ f.onload=async()=>{ const ok=await hydrated(); if(!ok) out.push('!! 未水合'); res(); }; W().location.reload(); }); }
+const gate=()=>D().querySelector('[data-gate]');
+const greet=()=>[...D().querySelectorAll('main p')].find(p=>p.textContent.includes('歡迎'))?.textContent.replace(/\s+/g,' ').trim();
+const btn=t=>[...D().querySelectorAll('button')].find(b=>b.textContent.includes(t));
+const gateVisible=()=>{ const g=gate(); return !!g && getComputedStyle(g).display!=='none'; };
+(async()=>{ try {
+ await hydrated(); W().localStorage.clear(); await reload();
+ out.push('1 新訪客：進站畫面顯示='+gateVisible()+'; html[data-visitor]='+D().documentElement.getAttribute('data-visitor'));
+ setVal(gate().querySelector('input'),'  小明  '); await sleep(150);
+ gate().querySelector('form').requestSubmit(); await sleep(700);
+ out.push('2 送出後：進站畫面關閉='+!gate()+'; 存入 localStorage='+JSON.stringify(W().localStorage.getItem(KEY))+'; 歡迎語='+JSON.stringify(greet())+'; 提示='+JSON.stringify(D().querySelector('[role=status]')?.textContent));
+ await reload();
+ out.push('3 回訪(重新整理)：進站畫面存在='+!!gate()+'; html[data-visitor]='+D().documentElement.getAttribute('data-visitor')+'; 歡迎語='+JSON.stringify(greet())+'; 預購表單姓名='+JSON.stringify(D().querySelector('input[name=name]')?.value)+'; 提示出現='+!!D().querySelector('[role=status]')+'; bodyOverflow='+JSON.stringify(D().body.style.overflow));
+ const probe=D().createElement('div'); probe.setAttribute('data-gate',''); D().body.appendChild(probe);
+ out.push('4 CSS：有 data-visitor 時 [data-gate] display='+getComputedStyle(probe).display); probe.remove();
+ D().querySelector('a[href="/blog"]').click(); await sleep(2500);
+ out.push('5 站內換到 /blog：path='+W().location.pathname+'; 進站畫面存在='+!!gate());
+ await reload(); // 回首頁重新載入
+ W().location.href='/'; await new Promise(r=>{ f.onload=()=>r(); }); await hydrated();
+ btn('換稱呼').click(); await sleep(700);
+ out.push('6 按「換稱呼」：localStorage='+JSON.stringify(W().localStorage.getItem(KEY))+'; html[data-visitor]='+D().documentElement.getAttribute('data-visitor')+'; 進站畫面可見='+gateVisible()+'; 輸入框='+JSON.stringify(gate()?.querySelector('input')?.value)+'; 歡迎語消失='+!greet());
+ setVal(gate().querySelector('input'),'阿華'); await sleep(150); gate().querySelector('form').requestSubmit(); await sleep(600);
+ out.push('7 改成阿華：localStorage='+JSON.stringify(W().localStorage.getItem(KEY))+'; 歡迎語='+JSON.stringify(greet()));
+ await reload(); out.push('8 再重新整理：歡迎語='+JSON.stringify(greet())+'; 表單姓名='+JSON.stringify(D().querySelector('input[name=name]')?.value));
+ W().localStorage.setItem(KEY,'     '); await reload();
+ out.push('9 竄改成純空白：進站畫面可見='+gateVisible()+'; html[data-visitor]='+D().documentElement.getAttribute('data-visitor')+'; bodyOverflow='+JSON.stringify(D().body.style.overflow));
+ W().localStorage.setItem(KEY,'一二三四五六七八九十一二三四五六七八九十甲乙丙'); await reload();
+ out.push('10 竄改成 23 字：歡迎語='+JSON.stringify(greet()));
+ W().localStorage.setItem(KEY,'<img src=x onerror=alert(1)>'); await reload();
+ out.push('11 竄改成 HTML：顯示='+JSON.stringify(greet())+'; 注入的 img='+!!D().querySelector('main img[src=x]'));
+ W().localStorage.clear();
+ } catch(e){ out.push('ERR '+e+' '+(e.stack||'')); }
+ document.getElementById('o').textContent='RESULT\n'+out.join('\n'); document.title='done';
+})();
+</script></body></html>

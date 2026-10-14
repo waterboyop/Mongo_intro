@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f6f0e4;
+  --ink: #1f1a14;
+  --muted: #766c5d;
+  --mango: #e8920c;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-mango: var(--mango);
+  --font-sans: var(--font-sans-tc), "Microsoft JhengHei", sans-serif;
+  --font-serif: var(--font-serif-tc), "PMingLiU", serif;
+  --font-display: var(--font-display-latin), Georgia, serif;
+}
+
+/* 錨點跳轉時避開固定在上方的導覽列 */
+html {
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans-tc), "Microsoft JhengHei", sans-serif;
+}
+
+::selection {
+  background: var(--mango);
+  color: var(--ink);
+}
+
+/* 霧面玻璃標籤：疊在照片上的小元件 */
+.frost {
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 14px 30px -14px rgba(31, 26, 20, 0.35);
+}
+
+/* 已存過稱呼的回訪者：layout 的預載腳本會在畫面出現前加上 data-visitor，
+   先把進站畫面藏起來，避免水合前閃一下 */
+html[data-visitor] [data-gate] {
+  display: none;
+}
+
+/* 彈窗進場 */
+@keyframes modal-pop {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.modal-pop { animation: modal-pop 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .modal-pop { animation: none; }
+}
+
+/* 鏤空大數字：描邊色由 --accent 帶入 */
+.outline-num {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--accent);
+  opacity: 0.45;
+}
+
+/* 表單欄位 */
+.field {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(246, 240, 228, 0.35);
+  padding: 0.75rem 0;
+  color: var(--paper);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field:focus {
+  border-bottom-color: var(--mango);
+}
+.field[aria-invalid="true"],
+.field[aria-invalid="true"]:focus {
+  border-bottom-color: #ff9b8a;
+}
+.field option {
+  color: var(--ink);
+}
